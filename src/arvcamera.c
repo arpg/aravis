@@ -50,8 +50,9 @@
 #include <arvbuffer.h>
 #include <arvgc.h>
 #include <arvgvdevice.h>
+#ifdef ARAVIS_BUILD_USB
 #include <arvuvdevice.h>
-#include <arvuvstream.h>
+#endif
 #include <arvenums.h>
 #include <arvstr.h>
 
@@ -1074,22 +1075,18 @@ arv_camera_set_trigger (ArvCamera *camera, const char *source)
 	g_return_if_fail (ARV_IS_CAMERA (camera));
 	g_return_if_fail (source != NULL);
 
-	switch (camera->priv->vendor) {
-		case ARV_CAMERA_VENDOR_BASLER:
-			arv_device_set_integer_feature_value (camera->priv->device, "AcquisitionFrameRateEnable",
-							      0);
-		default:
-			arv_device_set_string_feature_value (camera->priv->device, "TriggerSelector",
-							     "AcquisitionStart");
-			arv_device_set_string_feature_value (camera->priv->device, "TriggerMode", "Off");
-			arv_device_set_string_feature_value (camera->priv->device, "TriggerSelector",
-							     "FrameStart");
-			arv_device_set_string_feature_value (camera->priv->device, "TriggerMode", "On");
-			arv_device_set_string_feature_value (camera->priv->device, "TriggerActivation",
-							     "RisingEdge");
-			arv_device_set_string_feature_value (camera->priv->device, "TriggerSource", source);
-			break;
-	}
+	if (camera->priv->vendor ==  ARV_CAMERA_VENDOR_BASLER)
+		arv_device_set_integer_feature_value (camera->priv->device, "AcquisitionFrameRateEnable", 0);
+
+	arv_device_set_string_feature_value (camera->priv->device, "TriggerSelector",
+					     "AcquisitionStart");
+	arv_device_set_string_feature_value (camera->priv->device, "TriggerMode", "Off");
+	arv_device_set_string_feature_value (camera->priv->device, "TriggerSelector",
+					     "FrameStart");
+	arv_device_set_string_feature_value (camera->priv->device, "TriggerMode", "On");
+	arv_device_set_string_feature_value (camera->priv->device, "TriggerActivation",
+					     "RisingEdge");
+	arv_device_set_string_feature_value (camera->priv->device, "TriggerSource", source);
 }
 
 /**
@@ -1130,6 +1127,72 @@ arv_camera_get_trigger_source (ArvCamera *camera)
 	g_return_val_if_fail (ARV_IS_CAMERA (camera), NULL);
 
 	return arv_device_get_string_feature_value (camera->priv->device, "TriggerSource");
+}
+
+/**
+ * arv_camera_get_available_trigger_sources:
+ * @camera: a #ArvCamera
+ * @n_sources: (out): number of sources
+ *
+ * Gets the list of all available trigger sources.
+ *
+ * Returns: (array length=n_sources) (transfer container): a newly allocated array of strings, which must be freed using g_free().
+ *
+ * Since: 0.6.0
+ */
+
+const char **
+arv_camera_get_available_trigger_sources (ArvCamera *camera, guint *n_sources)
+{
+        g_return_val_if_fail (ARV_IS_CAMERA (camera), NULL);
+
+	return arv_device_get_available_enumeration_feature_values_as_strings (camera->priv->device, "TriggerSource", n_sources);
+}
+
+/**
+ * arv_camera_get_available_triggers:
+ * @camera: a #ArvCamera
+ * @n_triggers: (out): number of available triggers
+ *
+ * Gets a list of all available triggers: FrameStart, ExposureActive, etc...
+ *
+ * Returns: (array length=n_triggers) (transfer container): a newly allocated array of strings, which must be freed using g_free().
+ *
+ * Since: 0.6.0
+ */
+
+const char **
+arv_camera_get_available_triggers (ArvCamera *camera, guint *n_triggers)
+{
+        g_return_val_if_fail (ARV_IS_CAMERA (camera), NULL);
+
+	return arv_device_get_available_enumeration_feature_values_as_strings (camera->priv->device, "TriggerSelector", n_triggers);
+}
+
+/**
+ * arv_camera_clear_triggers:
+ * @camera: a #ArvCamera
+ *
+ * Disables all triggers.
+ *
+ * Since: 0.6.0
+ */
+
+void
+arv_camera_clear_triggers (ArvCamera* camera)
+{
+	const char **triggers;
+	guint n_triggers;
+	unsigned i;
+
+        g_return_if_fail (ARV_IS_CAMERA (camera));
+
+	triggers = arv_device_get_available_enumeration_feature_values_as_strings(camera->priv->device, "TriggerSelector", &n_triggers);
+
+	for (i = 0; i< n_triggers; i++) {
+		arv_device_set_string_feature_value (camera->priv->device, "TriggerSelector", triggers[i]);
+		arv_device_set_string_feature_value (camera->priv->device, "TriggerMode", "Off");
+	}
 }
 
 /**
@@ -1835,7 +1898,11 @@ arv_camera_is_uv_device	(ArvCamera *camera)
 {
 	g_return_val_if_fail (ARV_IS_CAMERA (camera), FALSE);
 
+#ifdef ARAVIS_BUILD_USB
 	return ARV_IS_UV_DEVICE (camera->priv->device);
+#else
+	return FALSE;
+#endif
 }
 
 /**
@@ -2021,6 +2088,7 @@ arv_camera_get_chunk_state (ArvCamera *camera, const char *chunk)
 void
 arv_camera_set_chunks (ArvCamera *camera, const char *chunk_list)
 {
+	const char **available_chunks;
 	char **chunks;
 	char *striped_chunk_list;
 	gboolean enable_chunk_data = FALSE;
@@ -2034,11 +2102,12 @@ arv_camera_set_chunks (ArvCamera *camera, const char *chunk_list)
 		return;
 	}
 
-	chunks = (char **) arv_device_get_available_enumeration_feature_values_as_strings (camera->priv->device,
+	available_chunks = arv_device_get_available_enumeration_feature_values_as_strings (camera->priv->device,
 											   "ChunkSelector", &n_values);
 	for (i = 0; i < n_values; i++) {
-		arv_camera_set_chunk_state (camera, chunks[i], FALSE);
+		arv_camera_set_chunk_state (camera, available_chunks[i], FALSE);
 	}
+	g_free (available_chunks);
 
 	striped_chunk_list = g_strdup (chunk_list);
 	arv_str_strip (striped_chunk_list, " ,:;", ',');

@@ -202,7 +202,14 @@ typedef struct ARAVIS_PACKED_STRUCTURE {
 	guint64 unknown7;
 } ArvUvcpManifestEntry;
 
-/* This is packed into the 32-bit schema type as bits 10-15 */
+/**
+ * ArvUvcpManifestSchemaType:
+ * @ARV_UVCP_SCHEMA_RAW: uncompressed genicam data
+ * @ARV_UVCP_SCHEMA_ZIP: zipped genicam data
+ *
+ * This is packed into the 32-bit schema type as bits 10-15
+ */
+
 typedef enum
 {
 	ARV_UVCP_SCHEMA_RAW = 0x0,
@@ -221,9 +228,9 @@ arv_uvcp_manifest_entry_get_schema_type (ArvUvcpManifestEntry *entry)
 #undef ARAVIS_PACKED_STRUCTURE
 
 void 			arv_uvcp_packet_free 			(ArvUvcpPacket *packet);
-ArvUvcpPacket * 	arv_uvcp_packet_new_read_memory_cmd 	(guint32 address, guint32 size,
+ArvUvcpPacket * 	arv_uvcp_packet_new_read_memory_cmd 	(guint64 address, guint32 size,
 								 guint16 packet_id, size_t *packet_size);
-ArvUvcpPacket * 	arv_uvcp_packet_new_write_memory_cmd	(guint32 address, guint32 size,
+ArvUvcpPacket * 	arv_uvcp_packet_new_write_memory_cmd	(guint64 address, guint32 size,
 								 guint16 packet_id, size_t *packet_size);
 char * 			arv_uvcp_packet_to_string 		(const ArvUvcpPacket *packet);
 void 			arv_uvcp_packet_debug 			(const ArvUvcpPacket *packet, ArvDebugLevel level);
