@@ -123,7 +123,7 @@ arv_uv_device_create_stream (ArvDevice *device, ArvStreamCallback callback, void
 }
 
 static gboolean
-_read_memory (ArvUvDevice *uv_device, guint32 address, guint32 size, void *buffer, GError **error)
+_read_memory (ArvUvDevice *uv_device, guint64 address, guint32 size, void *buffer, GError **error)
 {
 	ArvUvcpPacket *packet;
 	void *read_packet;
@@ -216,7 +216,7 @@ _read_memory (ArvUvDevice *uv_device, guint32 address, guint32 size, void *buffe
 }
 
 static gboolean
-arv_uv_device_read_memory (ArvDevice *device, guint32 address, guint32 size, void *buffer, GError **error)
+arv_uv_device_read_memory (ArvDevice *device, guint64 address, guint32 size, void *buffer, GError **error)
 {
 	ArvUvDevice *uv_device = ARV_UV_DEVICE (device);
 	int i;
@@ -237,7 +237,7 @@ arv_uv_device_read_memory (ArvDevice *device, guint32 address, guint32 size, voi
 }
 
 static gboolean
-_write_memory (ArvUvDevice *uv_device, guint32 address, guint32 size, void *buffer, GError **error)
+_write_memory (ArvUvDevice *uv_device, guint64 address, guint32 size, void *buffer, GError **error)
 {
 	ArvUvcpPacket *packet;
 	void *read_packet;
@@ -329,7 +329,7 @@ _write_memory (ArvUvDevice *uv_device, guint32 address, guint32 size, void *buff
 }
 
 static gboolean
-arv_uv_device_write_memory (ArvDevice *device, guint32 address, guint32 size, void *buffer, GError **error)
+arv_uv_device_write_memory (ArvDevice *device, guint64 address, guint32 size, void *buffer, GError **error)
 {
 	ArvUvDevice *uv_device = ARV_UV_DEVICE (device);
 	int i;
@@ -350,13 +350,13 @@ arv_uv_device_write_memory (ArvDevice *device, guint32 address, guint32 size, vo
 }
 
 static gboolean
-arv_uv_device_read_register (ArvDevice *device, guint32 address, guint32 *value, GError **error)
+arv_uv_device_read_register (ArvDevice *device, guint64 address, guint32 *value, GError **error)
 {
 	return arv_uv_device_read_memory (device, address, sizeof (guint32), value, error);
 }
 
 static gboolean
-arv_uv_device_write_register (ArvDevice *device, guint32 address, guint32 value, GError **error)
+arv_uv_device_write_register (ArvDevice *device, guint64 address, guint32 value, GError **error)
 {
 	return arv_uv_device_write_memory (device, address, sizeof (guint32), &value, error);
 }
@@ -395,7 +395,7 @@ _bootstrap (ArvUvDevice *uv_device)
 
 	arv_device_read_memory(device, ARV_ABRM_MANUFACTURER_NAME, 64, &manufacturer, NULL);
 	manufacturer[63] = 0;
-	arv_debug_device ("MANUFACTURER_NAME =        %s", manufacturer);
+	arv_debug_device ("MANUFACTURER_NAME =        '%s'", manufacturer);
 
 	arv_device_read_memory (device, ARV_ABRM_SBRM_ADDRESS, sizeof (guint64), &offset, NULL);
 	arv_device_read_memory (device, ARV_ABRM_MAX_DEVICE_RESPONSE_TIME, sizeof (guint32), &response_time, NULL);
