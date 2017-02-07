@@ -27,6 +27,7 @@
 
 #include <arvuvstreamprivate.h>
 #include <arvuvdeviceprivate.h>
+#include <arvuvinterfaceprivate.h>
 #include <arvgc.h>
 #include <arvdebug.h>
 #include <arvuvcp.h>
@@ -58,6 +59,8 @@ struct _ArvUvDevicePrivate {
 	guint timeout_ms;
 	guint cmd_packet_size_max;
 	guint ack_packet_size_max;
+	guint control_interface;
+	guint data_interface;
         guint8 control_endpoint;
         guint8 data_endpoint;
 	gboolean disconnected;
@@ -549,7 +552,7 @@ static void
 _open_usb_device (ArvUvDevice *uv_device)
 {
 	libusb_device **devices;
-	unsigned i;
+	unsigned i, j, k;
 	ssize_t count;
 
 	count = libusb_get_device_list (uv_device->priv->usb, &devices);
@@ -588,28 +591,33 @@ _open_usb_device (ArvUvDevice *uv_device)
 			    g_strcmp0 ((char * ) product, uv_device->priv->product) == 0 &&
 			    g_strcmp0 ((char * ) serial_nbr, uv_device->priv->serial_nbr) == 0) {
 				struct libusb_config_descriptor *config;
-				struct libusb_interface_descriptor interface;
 				struct libusb_endpoint_descriptor endpoint;
+				const struct libusb_interface *inter;
+				const struct libusb_interface_descriptor *interdesc;
 
 				uv_device->priv->usb_device = usb_device;
 
-				/* Assign the endpoint while the libusb device handle is handy */
-				libusb_get_active_config_descriptor(devices[i], &config);
-				/* Get the first endpoint of the first interface, strip the direction bits
-				   The control interface is bidirectional -> both IN and OUT endpoints */
-				interface = config->interface[0].altsetting[0];
-				endpoint = interface.endpoint[0];
-
-				uv_device->priv->control_endpoint = endpoint.bEndpointAddress & 0x0f; /* mask off reserved / direction */
-
-				/* Get the first endpoint of the second interface, strip the direction bits
-				   The data interface is one-way -> only an IN endpoint */
-				interface = config->interface[1].altsetting[0];
-				endpoint = interface.endpoint[0];
-
-				uv_device->priv->data_endpoint = 1;
-
-				libusb_free_config_descriptor(config);
+				libusb_get_config_descriptor (devices[i], 0, &config);
+				for (j = 0; j < (int) config->bNumInterfaces; j++) {
+					inter = &config->interface[j];
+					for (k = 0; k < inter->num_altsetting; k++) {
+						interdesc = &inter->altsetting[k];
+						if (interdesc->bInterfaceClass == ARV_UV_INTERFACE_INTERFACE_CLASS &&
+						    interdesc->bInterfaceSubClass == ARV_UV_INTERFACE_INTERFACE_SUBCLASS) {
+							if (interdesc->bInterfaceProtocol == ARV_UV_INTERFACE_CONTROL_PROTOCOL) {
+								endpoint = interdesc->endpoint[0];
+								uv_device->priv->control_endpoint = endpoint.bEndpointAddress & 0x0f;
+								uv_device->priv->control_interface = interdesc->bInterfaceNumber;
+							}
+							if (interdesc->bInterfaceProtocol == ARV_UV_INTERFACE_DATA_PROTOCOL) {
+								endpoint = interdesc->endpoint[0];
+								uv_device->priv->data_endpoint = endpoint.bEndpointAddress & 0x0f;
+								uv_device->priv->data_interface = interdesc->bInterfaceNumber;
+							}
+						}
+					}
+				}
+				libusb_free_config_descriptor (config);
 			} else
 				libusb_close (usb_device);
 
@@ -648,13 +656,15 @@ arv_uv_device_new (const char *vendor, const char *product, const char *serial_n
 
 	_open_usb_device (uv_device);
 
-	arv_debug_device("[UvDevice::new] Using control endpoint %d", uv_device->priv->control_endpoint);
-	arv_debug_device("[UvDevice::new] Using data endpoint %d", uv_device->priv->data_endpoint);
+	arv_debug_device("[UvDevice::new] Using control endpoint %d, interface %d",
+			 uv_device->priv->control_endpoint, uv_device->priv->control_interface);
+	arv_debug_device("[UvDevice::new] Using data endpoint %d, interface %d",
+			 uv_device->priv->data_endpoint, uv_device->priv->data_interface);
 
 	if (uv_device->priv->usb_device == NULL ||
-	    libusb_claim_interface (uv_device->priv->usb_device, 0) < 0 ||
-	    libusb_claim_interface (uv_device->priv->usb_device, 1) < 0){
-		arv_warning_device ("[UvDevice::new] Failed to claim USB interfaces to '%s - #%s'", product, serial_nbr);
+	    libusb_claim_interface (uv_device->priv->usb_device, uv_device->priv->control_interface) < 0 ||
+	    libusb_claim_interface (uv_device->priv->usb_device, uv_device->priv->data_interface) < 0) {
+		arv_warning_device ("[UvDevice::new] Failed to claim USB interface to '%s - #%s'", product, serial_nbr);
 		g_object_unref (uv_device);
 		return NULL;
 	}
@@ -691,7 +701,8 @@ arv_uv_device_finalize (GObject *object)
 	g_clear_pointer (&uv_device->priv->product, g_free);
 	g_clear_pointer (&uv_device->priv->serial_nbr, g_free);
 	if (uv_device->priv->usb_device != NULL) {
-		libusb_release_interface (uv_device->priv->usb_device, 0);
+		libusb_release_interface (uv_device->priv->usb_device, uv_device->priv->control_interface);
+		libusb_release_interface (uv_device->priv->usb_device, uv_device->priv->data_interface);
 		libusb_close (uv_device->priv->usb_device);
 	}
 	libusb_exit (uv_device->priv->usb);
