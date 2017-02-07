@@ -1135,56 +1135,8 @@ arv_camera_get_trigger_source (ArvCamera *camera)
 	return arv_device_get_string_feature_value (camera->priv->device, "TriggerSource");
 }
 
-/**
-<<<<<<< HEAD
- * arv_camera_get_trigger_sources:
- * @camera: a #ArvCamera
- * @numSources: a guint* that returns the number of sources listed
- *
- * Gets the trigger source. This function doesn't check if the camera is configured
- * to actually use this source as a trigger.
- *
- * Returns: a char** of possible sources
- *
- * Since: 
- */
 
-const char **
-arv_camera_get_trigger_sources (ArvCamera *camera, guint* numSources)
-{
-        g_return_val_if_fail (ARV_IS_CAMERA (camera), NULL);
-	
-	return arv_device_get_available_enumeration_feature_values_as_strings(camera->priv->device, "TriggerSource", numSources);
-}
 
-/**
- * arv_camera_get_trigger_types:
- * @camera: a #ArvCamera
- * @numSources: a guint* that returns the number of types listed
- *
- * Gets a list of trigger event types - FrameStart, ExposureActive, etc.
- *
- * Returns: a char** of possible trigger types
- *
- * Since: 
- */
-const char**
-arv_camera_get_trigger_types(ArvCamera *camera, guint* numTypes)
-{
-        g_return_val_if_fail (ARV_IS_CAMERA (camera), NULL);
-	
-	return arv_device_get_available_enumeration_feature_values_as_strings(camera->priv->device, "TriggerSelector", numTypes);
-=======
- * arv_camera_get_available_trigger_sources:
- * @camera: a #ArvCamera
- * @n_sources: (out): number of sources
- *
- * Gets the list of all available trigger sources.
- *
- * Returns: (array length=n_sources) (transfer container): a newly allocated array of strings, which must be freed using g_free().
- *
- * Since: 0.6.0
- */
 
 const char **
 arv_camera_get_available_trigger_sources (ArvCamera *camera, guint *n_sources)
@@ -1212,34 +1164,13 @@ arv_camera_get_available_triggers (ArvCamera *camera, guint *n_triggers)
         g_return_val_if_fail (ARV_IS_CAMERA (camera), NULL);
 
 	return arv_device_get_available_enumeration_feature_values_as_strings (camera->priv->device, "TriggerSelector", n_triggers);
->>>>>>> upstream/master
+
 }
 
 /**
  * arv_camera_clear_triggers:
  * @camera: a #ArvCamera
  *
-<<<<<<< HEAD
- * Disables all triggers  
- *
- * Returns: void
- *
- * Since: 
- */
-
-void
-arv_camera_clear_triggers(ArvCamera* camera)
-{
-        g_return_if_fail (ARV_IS_CAMERA (camera));
-	
-	guint numTypes;
-	const char** trigList = arv_device_get_available_enumeration_feature_values_as_strings(camera->priv->device, "TriggerSelector", &numTypes);
-	for (unsigned int i = 0; i< numTypes; i++)
-	  {
-	    arv_device_set_string_feature_value (camera->priv->device, "TriggerSelector", trigList[i]);
-	    arv_device_set_string_feature_value (camera->priv->device, "TriggerMode", "Off");
-	  }
-=======
  * Disables all triggers.
  *
  * Since: 0.6.0
@@ -1260,7 +1191,7 @@ arv_camera_clear_triggers (ArvCamera* camera)
 		arv_device_set_string_feature_value (camera->priv->device, "TriggerSelector", triggers[i]);
 		arv_device_set_string_feature_value (camera->priv->device, "TriggerMode", "Off");
 	}
->>>>>>> upstream/master
+
 }
 
 /**
