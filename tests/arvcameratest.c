@@ -357,7 +357,7 @@ main (int argc, char **argv)
 		  }
 		const char** triggerSources;
 		guint numTriggers;
-		triggerSources = arv_camera_get_trigger_sources(camera, &numTriggers);
+		triggerSources = arv_camera_get_available_trigger_sources(camera, &numTriggers);
 		for (int i=0; i < numTriggers; i++)
 		  {
 		        printf("Found trigger source: %s\n", triggerSources[i]);
