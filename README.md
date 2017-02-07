@@ -40,6 +40,11 @@ autoheader
 glibtoolize --copy
 automake --add-missing
 ./configure
+```
+
+Realtime tests do not work with Mac OS, so you'll have to disable them by manually editing `tests/Makefile.am` to remove or comment the line `realtime-test`. Then you can proceed with `make`:
+
+```
 make
 make install
 ```

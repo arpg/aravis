@@ -93,8 +93,7 @@ arv_uv_device_bulk_transfer (ArvUvDevice *uv_device, ArvUvEndpointType endpoint_
 	endpoint = (endpoint_type == ARV_UV_ENDPOINT_CONTROL) ? uv_device->priv->control_endpoint : uv_device->priv->data_endpoint;
 	result = libusb_bulk_transfer (uv_device->priv->usb_device, endpoint | endpoint_flags, data, size, &transferred,
 				       MAX (uv_device->priv->timeout_ms, timeout_ms));
-
-	success = result >= 0;
+	success = (result >= 0);
 
 	if (!success)
 		g_set_error (error, ARV_DEVICE_ERROR, ARV_DEVICE_STATUS_TRANSFER_ERROR,
@@ -677,6 +676,7 @@ arv_uv_device_init (ArvUvDevice *uv_device)
 	uv_device->priv = G_TYPE_INSTANCE_GET_PRIVATE (uv_device, ARV_TYPE_UV_DEVICE, ArvUvDevicePrivate);
 	uv_device->priv->cmd_packet_size_max = 65536 + sizeof (ArvUvcpHeader);
 	uv_device->priv->ack_packet_size_max = 65536 + sizeof (ArvUvcpHeader);
+	arv_debug_device("Default max ack: %u", uv_device->priv->ack_packet_size_max);
 	uv_device->priv->disconnected = FALSE;
 }
 
