@@ -81,9 +81,10 @@ arv_uv_stream_thread (void *data)
 
 	arv_log_stream_thread ("Start USB3Vision stream thread");
 
-	thread_data->stream_condvar = g_cond_new();
+	thread_data->stream_condvar = g_new(GCond, 1);
 	g_cond_init(thread_data->stream_condvar);
-	thread_data->stream_mutex = g_mutex_new();
+	thread_data->stream_mutex = g_new(GMutex,1);
+
 	g_mutex_init(thread_data->stream_mutex);
 	thread_data->can_start = 0;
 	
@@ -126,7 +127,7 @@ arv_uv_stream_thread (void *data)
 		else
 			packet = incoming_buffer;
 
-		arv_log_sp ("Asking for %u bytes", size);
+		arv_log_stream_thread("Asking for %u bytes", size);
 		arv_uv_device_bulk_transfer (thread_data->uv_device,  ARV_UV_ENDPOINT_DATA, LIBUSB_ENDPOINT_IN,
 					     packet, size, &transferred, 0, NULL);
 
@@ -211,7 +212,7 @@ arv_uv_stream_thread (void *data)
 	return NULL;
 }
 
-/* ArvUvStream implemenation */
+/* ArvUvStream implementation */
 
 
 /**

@@ -127,8 +127,16 @@ void		arv_camera_get_exposure_time_bounds	(ArvCamera *camera, double *min, doubl
 void		arv_camera_set_exposure_time_auto	(ArvCamera *camera, ArvAuto auto_mode);
 ArvAuto		arv_camera_get_exposure_time_auto	(ArvCamera *camera);
 
-/* Analog control */
+/* GPIO Support */
+const char**    arv_camera_get_gpio_lines               (ArvCamera *camera, guint *numLines);
+void            arv_camera_set_gpio_mode                (ArvCamera *camera, const char* line, ArvGpioMode mode);
+ArvGpioMode     arv_camera_get_gpio_mode                (ArvCamera *camera, const char* line);
+void            arv_camera_set_gpio_invert              (ArvCamera *camera, const char* line, ArvGpioInvertMode invert);
+const char**    arv_camera_get_gpio_output_sources      (ArvCamera *camera, guint *numSources);
+void            arv_camera_set_gpio_output_source       (ArvCamera *camera, const char* line, const char* source);
+guint           arv_camera_get_gpio_status              (ArvCamera *camera, const char* line);
 
+/* Analog Control */
 gboolean 	arv_camera_is_gain_available		(ArvCamera *camera);
 gboolean 	arv_camera_is_gain_auto_available	(ArvCamera *camera);
 
