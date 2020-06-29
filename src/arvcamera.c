@@ -50,8 +50,10 @@
 #include <arvbuffer.h>
 #include <arvgc.h>
 #include <arvgvdevice.h>
+#include <arvconfig.h>
 #ifdef ARAVIS_BUILD_USB
 #include <arvuvdevice.h>
+#include <arvuvstream.h>
 #endif
 #include <arvenums.h>
 #include <arvstr.h>
