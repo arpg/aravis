@@ -84,6 +84,7 @@ arv_uv_stream_thread (void *data)
 	thread_data->stream_condvar = g_new(GCond, 1);
 	g_cond_init(thread_data->stream_condvar);
 	thread_data->stream_mutex = g_new(GMutex,1);
+
 	g_mutex_init(thread_data->stream_mutex);
 	thread_data->can_start = 0;
 	

@@ -51,6 +51,7 @@
 #include <arvbuffer.h>
 #include <arvgc.h>
 #include <arvgvdevice.h>
+#include <arvconfig.h>
 #ifdef ARAVIS_BUILD_USB
 #include <arvuvdevice.h>
 #include <arvuvstream.h>
@@ -655,6 +656,7 @@ arv_camera_start_acquisition (ArvCamera *camera)
 	g_return_if_fail (ARV_IS_CAMERA (camera));
 	arv_device_execute_command (camera->priv->device, "AcquisitionStart");
 
+
 #ifdef ARAVIS_BUILD_USB
 	if (ARV_IS_UV_DEVICE(camera->priv->device))
 	  {
@@ -664,6 +666,7 @@ arv_camera_start_acquisition (ArvCamera *camera)
 	    uv_stream = arv_uv_device_get_stream(uv_cam);
 	    arv_uv_stream_unpause(uv_stream);
 	  }
+
 #endif
 }
 
